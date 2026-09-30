@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html","k":"18"},{"p":"edu.java.app","l":"Main"},{"p":"edu.java.app","l":"MusicGroupList"}];updateSearchResults();
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html","k":"18"},{"p":"edu.java.app.exceptions","l":"EmptyGroupNameException","k":"13"},{"p":"edu.java.app.exceptions","l":"InvalidYearException","k":"13"}];updateSearchResults();
