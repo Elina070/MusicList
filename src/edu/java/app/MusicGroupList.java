@@ -2,24 +2,25 @@ package edu.java.app;
 
 import edu.java.app.exceptions.EmptyGroupNameException;
 import edu.java.app.exceptions.InvalidYearException;
+import edu.java.app.files.TextFileManager;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.Vector;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Экранная форма "Music group list".
  * <p>
- * Отображает список музыкальных групп и предоставляет пользователю
- * доступ к основным операциям управления: сохранение, импорт,
- * удаление, редактирование, поиск, сортировка, добавление.
- * В версии 1.3 добавлена валидация данных и обработка исключений.
+ * Предоставляет графический интерфейс управления списком музыкальных групп:
+ * быстрое сохранение (Ctrl+S), сохранение как, импорт, сортировка, поиск,
+ * добавление и удаление записей.
  *
  * @author Оганнисян Э. А.
- * @version 1.3
+ * @version 1.5
  */
 public class MusicGroupList {
 
@@ -38,14 +39,15 @@ public class MusicGroupList {
     /** Панель прокрутки для таблицы */
     private JScrollPane scroll;
 
-    /** Кнопка "дополнительной информации" */
+    /** Кнопка вызова справки */
     private JButton moreInformationButton;
+
+    /** Переменные состояния сортировки */
+    private int lastSortedColumn = -1;
+    private boolean sortAscending = true;
 
     /**
      * Проверяет корректность данных, введённых пользователем в ячейку таблицы.
-     * <p>
-     * Выполняет контроль текстовых и числовых полей: проверяет наименование группы
-     * на пустоту, а также проверяет соответствие года основания и рейтинга числовому типу.
      *
      * @param column индекс редактируемой колонки таблицы
      * @param value  введённое значение ячейки
@@ -53,9 +55,6 @@ public class MusicGroupList {
      * @throws EmptyGroupNameException если название группы не содержит символов
      * @throws NumberFormatException   если вместо целого числа введён текст
      */
-    
-    
-    
     private void validateCellValue(int column, Object value)
             throws InvalidYearException, EmptyGroupNameException, NumberFormatException {
 
@@ -75,7 +74,7 @@ public class MusicGroupList {
             Integer.parseInt(strVal);
         }
 
-        // Проверка колонки "year" (индекс 5) — на целое число и диапазон
+        // Проверка колонки "year" (индекс 5) — диапазон 1900-2026
         if (column == 5) {
             int year = Integer.parseInt(strVal);
             if (year < 1900 || year > 2026) {
@@ -85,35 +84,84 @@ public class MusicGroupList {
     }
 
     /**
+     * Пересчитывает и обновляет порядковые номера (колонка №) для всех строк таблицы.
+     */
+    public void updateRowNumbers() {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            model.setValueAt(i + 1, i, 0);
+        }
+    }
+
+    /**
+     * Сортирует строки таблицы по выбранной колонке.
+     *
+     * @param columnIndex индекс колонки для сортировки
+     */
+    @SuppressWarnings("unchecked")
+    private void sortTableByColumn(int columnIndex) {
+        if (model.getRowCount() == 0) {
+            return;
+        }
+
+        if (lastSortedColumn == columnIndex) {
+            sortAscending = !sortAscending;
+        } else {
+            lastSortedColumn = columnIndex;
+            sortAscending = true;
+        }
+
+        Vector<Vector<Object>> data = (Vector) model.getDataVector();
+
+        data.sort((row1, row2) -> {
+            Object val1 = row1.get(columnIndex);
+            Object val2 = row2.get(columnIndex);
+
+            if (val1 == null && val2 == null) return 0;
+            if (val1 == null) return sortAscending ? -1 : 1;
+            if (val2 == null) return sortAscending ? 1 : -1;
+
+            int cmp;
+            if (val1 instanceof Number && val2 instanceof Number) {
+                cmp = Double.compare(((Number) val1).doubleValue(), ((Number) val2).doubleValue());
+            } else {
+                cmp = val1.toString().compareToIgnoreCase(val2.toString());
+            }
+
+            return sortAscending ? cmp : -cmp;
+        });
+
+        updateRowNumbers();
+        model.fireTableDataChanged();
+    }
+
+    /**
      * Метод построения и визуализации экранной формы.
-     * <p>
-     * Создаёт окно, размещает все графические компоненты
-     * с помощью компоновщика {@link BorderLayout}
-     * и делает окно видимым.
      */
     public void show() {
 
         frame = new JFrame("Music group list");
-        frame.setSize(900, 550);
+        frame.setSize(950, 550);
         frame.setLocation(200, 100);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
-        // ВЕРХНЯЯ ПАНЕЛЬ
+        // ВЕРХНЯЯ ПАНЕЛЬ ИНСТРУМЕНТОВ
         toolBar = new JToolBar("Панель инструментов");
         toolBar.setFloatable(false);
-        toolBar.setPreferredSize(new java.awt.Dimension(900, 60));
+        toolBar.setPreferredSize(new java.awt.Dimension(950, 60));
         toolBar.setMargin(new java.awt.Insets(5, 5, 5, 5));
 
-        JButton saveButton   = new JButton("Save");
-        JButton importButton = new JButton("Import");
-        JButton deleteButton = new JButton("Delete");
-        JButton findButton   = new JButton("Find");
-        JButton sortButton   = new JButton("Sort");
-        JButton addButton    = new JButton("Add");
+        JButton saveButton     = new JButton("Save");
+        JButton saveAsButton   = new JButton("Save As...");
+        JButton importButton   = new JButton("Import");
+        JButton deleteButton   = new JButton("Delete");
+        JButton findButton     = new JButton("Find");
+        JButton sortButton     = new JButton("Sort ▼");
+        JButton addButton      = new JButton("Add");
 
         java.awt.Dimension btnSize = new java.awt.Dimension(500, 500);
         saveButton.setPreferredSize(btnSize);
+        saveAsButton.setPreferredSize(btnSize);
         importButton.setPreferredSize(btnSize);
         deleteButton.setPreferredSize(btnSize);
         findButton.setPreferredSize(btnSize);
@@ -121,14 +169,16 @@ public class MusicGroupList {
         addButton.setPreferredSize(btnSize);
 
         // Подсказки
-        saveButton.setToolTipText("Сохранить / Сохранить как");
-        importButton.setToolTipText("Импорт из файла или буфера обмена");
-        deleteButton.setToolTipText("Удалить таблицу / по имени / по номеру строки");
-        findButton.setToolTipText("Поиск по критерию");
-        sortButton.setToolTipText("Сортировка по критерию (возрастание/убывание)");
+        saveButton.setToolTipText("Быстрое сохранение файла (Ctrl + S)");
+        saveAsButton.setToolTipText("Сохранить в новый текстовый файл...");
+        importButton.setToolTipText("Загрузить данные из текстового файла");
+        deleteButton.setToolTipText("Удалить выбранную группу");
+        findButton.setToolTipText("Поиск группы по названию");
+        sortButton.setToolTipText("Сортировка по выбранной колонке");
         addButton.setToolTipText("Добавить новую группу");
 
         toolBar.add(saveButton);
+        toolBar.add(saveAsButton);
         toolBar.add(importButton);
         toolBar.add(deleteButton);
         toolBar.add(findButton);
@@ -137,65 +187,38 @@ public class MusicGroupList {
 
         frame.add(toolBar, BorderLayout.NORTH);
 
-        // ТАБЛИЦА
+        // ШАПКА ТАБЛИЦЫ
         String[] columns = {
                 "№", "icon", "name", "rate",
                 "hit", "year", "leader", "more information"
         };
 
-        Object[][] data = {
-                {1, "", "The Beatles", 5, "Hey Jude", 1960, "John Lennon", "Легендарная группа"},
-                {2, "", "Queen", 5, "Bohemian Rhapsody", 1970, "Freddie Mercury", "Рок-классика"},
-                {3, "", "Nirvana", 4, "Smells Like Teen Spirit", 1987, "Kurt Cobain", "Гранж"}
-        };
-
-        model = new DefaultTableModel(data, columns) {
-            /**
-             * Определяет, можно ли редактировать ячейку таблицы.
-             * Колонка № (индекс 0) и "more information" (индекс 7) — только для чтения.
-             *
-             * @param row    номер строки
-             * @param column номер колонки
-             * @return true, если ячейку можно редактировать
-             */
+        // ТАБЛИЦА (изначально пустая)
+        model = new DefaultTableModel(new Object[0][columns.length], columns) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column != 0 && column != 7;
             }
 
-            /**
-             * Устанавливает значение в ячейку таблицы с предварительной валидацией.
-             * <p>
-             * Перехватывает пользовательский ввод, вызывает метод контроля ошибок
-             * и сохраняет числовые данные в типе Integer для корректной работы сортировки.
-             *
-             * @param aValue новое значение ячейки
-             * @param row    индекс редактируемой строки
-             * @param column индекс редактируемой колонки
-             */
             @Override
             public void setValueAt(Object aValue, int row, int column) {
                 try {
-                    // Контроль введенного значения с помощью метода с валидацией
                     validateCellValue(column, aValue);
 
-                    // Сохранение числовых полей как Integer для будущей правильной сортировки
-                    if (column == 3 || column == 5) {
+                    if (column == 0 || column == 3 || column == 5) {
                         super.setValueAt(Integer.parseInt(aValue.toString().trim()), row, column);
                     } else {
                         super.setValueAt(aValue.toString().trim(), row, column);
                     }
 
-                } catch (NumberFormatException e) { // 1!!!!!!!!
-                    // Перехват стандартного исключения формата чисел
+                } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(
                             frame,
                             "В данную ячейку необходимо ввести целое число!",
                             "Ошибка типа данных",
                             JOptionPane.ERROR_MESSAGE
                     );
-                } catch (InvalidYearException | EmptyGroupNameException e) {//2!!!!!
-                    // Перехват собственных пользовательских исключений
+                } catch (InvalidYearException | EmptyGroupNameException e) {
                     JOptionPane.showMessageDialog(
                             frame,
                             e.getMessage(),
@@ -208,142 +231,129 @@ public class MusicGroupList {
 
         table = new JTable(model);
         scroll = new JScrollPane(table);
-
         frame.add(scroll, BorderLayout.CENTER);
+
+        // ВЫПАДАЮЩЕЕ МЕНЮ СОРТИРОВКИ
+        JPopupMenu sortPopupMenu = new JPopupMenu();
+        for (int i = 2; i <= 6; i++) {
+            final int colIndex = i;
+            JMenuItem item = new JMenuItem(columns[i]);
+            item.addActionListener(e -> sortTableByColumn(colIndex));
+            sortPopupMenu.add(item);
+        }
+        sortButton.addActionListener(e -> sortPopupMenu.show(sortButton, 0, sortButton.getHeight()));
 
         // НИЖНЯЯ ПАНЕЛЬ
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         moreInformationButton = new JButton("?");
-        moreInformationButton.setToolTipText("Информация об использовании");
+        moreInformationButton.setToolTipText("Информация о программе");
         bottomPanel.add(moreInformationButton);
 
-        // ЗАГЛУШКИ
-        saveButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                JOptionPane.showMessageDialog(frame, "Save нажата");
-            }
-        });
-        importButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                JOptionPane.showMessageDialog(frame, "Import нажата");
-            }
-        });
-        sortButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                JOptionPane.showMessageDialog(frame, "Sort нажата");
+        // ОБРАБОТЧИКИ СОХРАНЕНИЯ И ИМПОРТА
+        saveButton.addActionListener(event -> TextFileManager.save(frame, model));
+        saveAsButton.addActionListener(event -> TextFileManager.saveAs(frame, model));
+        importButton.addActionListener(event -> TextFileManager.importData(frame, model));
+
+        // ГОРЯЧАЯ КЛАВИША CTRL + S
+        KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK);
+        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlS, "saveShortcut");
+        frame.getRootPane().getActionMap().put("saveShortcut", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                TextFileManager.save(frame, model);
             }
         });
 
-        // РАБОЧИЕ ФУНКЦИИ
+        // ПОИСК
+        findButton.addActionListener(event -> {
+            String query = JOptionPane.showInputDialog(
+                    frame,
+                    "Введите название группы:",
+                    "Поиск",
+                    JOptionPane.QUESTION_MESSAGE
+            );
 
-        findButton.addActionListener(new ActionListener() {
-            /**
-             * Обрабатывает нажатие кнопки Find.
-             * Запрашивает у пользователя название группы
-             * и выделяет первую подходящую строку в таблице.
-             *
-             * @param event событие нажатия кнопки
-             */
-            public void actionPerformed(ActionEvent event) {
-                String query = JOptionPane.showInputDialog(
-                        frame,
-                        "Введите название группы:",
-                        "Поиск",
-                        JOptionPane.QUESTION_MESSAGE
-                );
+            if (query == null || query.trim().isEmpty()) {
+                return;
+            }
 
-                if (query == null || query.isEmpty()) {
+            for (int i = 0; i < model.getRowCount(); i++) {
+                Object nameVal = model.getValueAt(i, 2);
+                if (nameVal != null && nameVal.toString().toLowerCase().contains(query.trim().toLowerCase())) {
+                    table.setRowSelectionInterval(i, i);
+                    table.scrollRectToVisible(table.getCellRect(i, 0, true));
                     return;
                 }
+            }
 
-                for (int i = 0; i < model.getRowCount(); i++) {
-                    String name = (String) model.getValueAt(i, 2);
-                    if (name.toLowerCase().contains(query.toLowerCase())) {
-                        table.setRowSelectionInterval(i, i);
-                        table.scrollRectToVisible(table.getCellRect(i, 0, true));
-                        return;
-                    }
-                }
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Группа \"" + query + "\" не найдена",
+                    "Результат поиска",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        });
 
+        // УДАЛЕНИЕ СТРОКИ
+        deleteButton.addActionListener(event -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
                 JOptionPane.showMessageDialog(
                         frame,
-                        "Группа \"" + query + "\" не найдена",
-                        "Результат поиска",
-                        JOptionPane.INFORMATION_MESSAGE
+                        "Не выбрана строка для удаления",
+                        "Предупреждение",
+                        JOptionPane.WARNING_MESSAGE
                 );
+            } else {
+                model.removeRow(row);
+                updateRowNumbers();
             }
         });
 
-        deleteButton.addActionListener(new ActionListener() {
-            /**
-             * Обрабатывает нажатие кнопки Delete.
-             * Удаляет выделенную строку из таблицы.
-             * Если строка не выбрана — показывает предупреждение.
-             *
-             * @param event событие нажатия кнопки
-             */
-            public void actionPerformed(ActionEvent event) {
+        // ДОБАВЛЕНИЕ СТРОКИ
+        addButton.addActionListener(event -> {
+            int newNumber = model.getRowCount() + 1;
+            model.addRow(new Object[]{
+                    newNumber, "", "Новая группа", 0, "", 2024, "", "Подробнее"
+            });
+            updateRowNumbers();
+        });
+
+        // КНОПКА ПОМОЩИ
+        moreInformationButton.addActionListener(event -> JOptionPane.showMessageDialog(
+                frame,
+                "Программа учёта музыкальных групп.\nГорячие клавиши:\n[Ctrl + S] — быстрое сохранение",
+                "О программе",
+                JOptionPane.INFORMATION_MESSAGE
+        ));
+
+        // КЛИК ПО ЯЧЕЙКЕ "more information" (индекс 7)
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent event) {
                 int row = table.getSelectedRow();
-                if (row == -1) {
+                int col = table.getSelectedColumn();
+
+                if (col == 7 && row >= 0) {
+                    Object name   = model.getValueAt(row, 2);
+                    Object rate   = model.getValueAt(row, 3);
+                    Object hit    = model.getValueAt(row, 4);
+                    Object year   = model.getValueAt(row, 5);
+                    Object leader = model.getValueAt(row, 6);
+
                     JOptionPane.showMessageDialog(
                             frame,
-                            "Не выбрана строка для удаления",
-                            "Предупреждение",
-                            JOptionPane.WARNING_MESSAGE
+                            "Информация о группе:\n\n" +
+                            "🎸 Название: " + name + "\n" +
+                            "🎤 Лидер / Вокал: " + leader + "\n" +
+                            "📅 Год основания: " + year + "\n" +
+                            "🔥 Главный хит: " + hit + "\n" +
+                            "⭐ Рейтинг: " + rate + " / 5",
+                            "Карточка: " + name,
+                            JOptionPane.INFORMATION_MESSAGE
                     );
-                } else {
-                    model.removeRow(row);
                 }
             }
-        });
-
-        addButton.addActionListener(new ActionListener() {
-            /**
-             * Обрабатывает нажатие кнопки Add.
-             * Добавляет в таблицу новую строку с очередным номером.
-             *
-             * @param event событие нажатия кнопки
-             */
-            public void actionPerformed(ActionEvent event) {
-                int newNumber = model.getRowCount() + 1;
-                model.addRow(new Object[]{
-                        newNumber, "", "Новая группа", 0, "", 2024, "", ""
-                });
-            }
-        });
-
-        moreInformationButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                JOptionPane.showMessageDialog(frame,
-                        "*Инфа о работе приложения*",
-                        "О программе",
-                        JOptionPane.QUESTION_MESSAGE);
-            }
-        });
-
-        table.addMouseListener(new java.awt.event.MouseListener() {
-            /**
-             * Обрабатывает двойной клик по таблице.
-             * При двойном клике по колонке "more information"
-             * выводит сообщение о переходе на страницу с информацией о группе.
-             *
-             * @param event событие клика мышью
-             */
-            public void mouseClicked(java.awt.event.MouseEvent event) {
-                if (event.getClickCount() == 2) {
-                    int row = table.getSelectedRow();
-                    int col = table.getSelectedColumn();
-                    if (col == 7 && row >= 0) {
-                        String name = (String) model.getValueAt(row, 2);
-                        JOptionPane.showMessageDialog(frame,
-                                "Переход на страницу с большей информацией о группе \"" + name + "\"");
-                    }
-                }
-            }
-            public void mousePressed(java.awt.event.MouseEvent e)  {}
-            public void mouseReleased(java.awt.event.MouseEvent e) {}
-            public void mouseEntered(java.awt.event.MouseEvent e)  {}
-            public void mouseExited(java.awt.event.MouseEvent e)   {}
         });
 
         frame.add(bottomPanel, BorderLayout.SOUTH);
