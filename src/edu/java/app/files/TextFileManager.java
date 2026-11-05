@@ -59,7 +59,7 @@ public class TextFileManager {
             return;
         }
 
-        // Диалоговое окно сохранения (п. 5.2 методички)
+        // Диалоговое окно сохранения 
         FileDialog saveDialog = new FileDialog(frame, "Сохранить как...", FileDialog.SAVE);
         saveDialog.setFile("*.txt");
         saveDialog.setVisible(true);
@@ -80,7 +80,7 @@ public class TextFileManager {
     }
 
     /**
-     * Построчная запись данных таблицы в текстовый файл (п. 5.3 методички).
+     * Построчная запись данных таблицы в текстовый файл .
      * Сохраняет значащие колонки с 1 по 6 (иконка, имя, рейтинг, хит, год, лидер).
      *
      * @param frame     родительское окно
@@ -122,7 +122,7 @@ public class TextFileManager {
     }
 
     /**
-     * Построчное чтение данных из текстового файла в таблицу (п. 5.4 методички).
+     * Построчное чтение данных из текстового файла в таблицу .
      *
      * @param frame родительское окно
      * @param model модель таблицы
@@ -143,7 +143,7 @@ public class TextFileManager {
         currentFilePath = dir + file;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(currentFilePath))) {
-            // Очистка таблицы перед загрузкой (п. 5.4 методички)
+            // Очистка таблицы перед загрузкой 
             while (model.getRowCount() > 0) {
                 model.removeRow(0);
             }
@@ -215,4 +215,151 @@ public class TextFileManager {
             );
         }
     }
+
+/**
+ * Сохраняет таблицу в указанный TXT-файл.
+ */
+public static boolean saveToFile(
+        JFrame frame,
+        DefaultTableModel model,
+        File file
+) {
+    if (model.getRowCount() == 0) {
+        JOptionPane.showMessageDialog(
+                frame,
+                "Таблица пуста. Нечего сохранять!",
+                "Предупреждение",
+                JOptionPane.WARNING_MESSAGE
+        );
+        return false;
+    }
+
+    try (java.io.BufferedWriter writer =
+                 new java.io.BufferedWriter(
+                         new java.io.FileWriter(file)
+                 )) {
+
+        for (int i = 0; i < model.getRowCount(); i++) {
+            for (int j = 1; j <= 6; j++) {
+                Object value = model.getValueAt(i, j);
+
+                writer.write(value == null ? "" : value.toString());
+                writer.newLine();
+            }
+        }
+
+        currentFilePath = file.getAbsolutePath();
+        frame.setTitle("Music group list - " + file.getName());
+
+        JOptionPane.showMessageDialog(
+                frame,
+                "Данные успешно сохранены в TXT-файл!",
+                "Сохранение",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+
+        return true;
+
+    } catch (java.io.IOException e) {
+        JOptionPane.showMessageDialog(
+                frame,
+                "Ошибка сохранения TXT-файла:\n" + e.getMessage(),
+                "Ошибка",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        return false;
+    }
+}
+
+/**
+ * Загружает данные из указанного TXT-файла.
+ */
+public static boolean importData(
+        JFrame frame,
+        DefaultTableModel model,
+        File file
+) {
+    java.util.List<Object[]> importedRows =
+            new java.util.ArrayList<>();
+
+    try (java.io.BufferedReader reader =
+                 new java.io.BufferedReader(
+                         new java.io.FileReader(file)
+                 )) {
+
+        String icon;
+
+        while ((icon = reader.readLine()) != null) {
+            String name = reader.readLine();
+            String rateText = reader.readLine();
+            String hit = reader.readLine();
+            String yearText = reader.readLine();
+            String leader = reader.readLine();
+
+            if (name == null || rateText == null
+                    || hit == null || yearText == null
+                    || leader == null) {
+                throw new java.io.IOException(
+                        "Файл содержит неполную запись группы."
+                );
+            }
+
+            if (name.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Название группы не может быть пустым."
+                );
+            }
+
+            int rate = Integer.parseInt(rateText.trim());
+            int year = Integer.parseInt(yearText.trim());
+
+            if (year < 1900 || year > 2026) {
+                throw new IllegalArgumentException(
+                        "Год основания должен быть в диапазоне 1900–2026."
+                );
+            }
+
+            importedRows.add(new Object[]{
+                    importedRows.size() + 1,
+                    icon,
+                    name,
+                    rate,
+                    hit,
+                    year,
+                    leader,
+                    "Подробнее"
+            });
+        }
+
+        model.setRowCount(0);
+
+        for (Object[] row : importedRows) {
+            model.addRow(row);
+        }
+
+        currentFilePath = file.getAbsolutePath();
+        frame.setTitle("Music group list - " + file.getName());
+
+        JOptionPane.showMessageDialog(
+                frame,
+                "Данные успешно загружены из TXT-файла!",
+                "Импорт",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+
+        return true;
+
+    } catch (java.io.IOException | IllegalArgumentException e) {
+        JOptionPane.showMessageDialog(
+                frame,
+                "Ошибка чтения TXT-файла:\n" + e.getMessage(),
+                "Ошибка импорта",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        return false;
+    }
+}
+
 }

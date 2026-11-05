@@ -1,90 +1,81 @@
+
 package edu.java.app;
 
 import edu.java.app.exceptions.EmptyGroupNameException;
 import edu.java.app.exceptions.InvalidYearException;
 import edu.java.app.files.TextFileManager;
+import edu.java.app.files.XmlFileManager;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.Vector;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 /**
  * Экранная форма "Music group list".
- * <p>
- * Предоставляет графический интерфейс управления списком музыкальных групп:
- * быстрое сохранение (Ctrl+S), сохранение как, импорт, сортировка, поиск,
- * добавление и удаление записей.
  *
  * @author Оганнисян Э. А.
- * @version 1.5
+ * @version 1.6
  */
 public class MusicGroupList {
 
-    /** Главное окно приложения */
     private JFrame frame;
-
-    /** Панель инструментов с кнопками управления */
     private JToolBar toolBar;
-
-    /** Таблица для отображения списка групп */
     private JTable table;
-
-    /** Модель данных таблицы */
     private DefaultTableModel model;
-
-    /** Панель прокрутки для таблицы */
     private JScrollPane scroll;
-
-    /** Кнопка вызова справки */
     private JButton moreInformationButton;
 
-    /** Переменные состояния сортировки */
     private int lastSortedColumn = -1;
     private boolean sortAscending = true;
 
+    /** Текущий формат файла */
+    private String currentFormat;
+
     /**
-     * Проверяет корректность данных, введённых пользователем в ячейку таблицы.
-     *
-     * @param column индекс редактируемой колонки таблицы
-     * @param value  введённое значение ячейки
-     * @throws InvalidYearException    если год основания выходит за границы 1900–2026 гг.
-     * @throws EmptyGroupNameException если название группы не содержит символов
-     * @throws NumberFormatException   если вместо целого числа введён текст
+     * Проверяет корректность данных в ячейке.
      */
     private void validateCellValue(int column, Object value)
-            throws InvalidYearException, EmptyGroupNameException, NumberFormatException {
+            throws InvalidYearException,
+            EmptyGroupNameException,
+            NumberFormatException {
 
         if (value == null) {
-            throw new EmptyGroupNameException("Значение не может быть null!");
+            throw new EmptyGroupNameException(
+                    "Значение не может быть null!"
+            );
         }
 
         String strVal = value.toString().trim();
 
-        // Проверка колонки "name" (индекс 2)
         if (column == 2 && strVal.isEmpty()) {
-            throw new EmptyGroupNameException("Название группы не может быть пустым!");
+            throw new EmptyGroupNameException(
+                    "Название группы не может быть пустым!"
+            );
         }
 
-        // Проверка колонки "rate" (индекс 3) — только на целое число
         if (column == 3) {
             Integer.parseInt(strVal);
         }
 
-        // Проверка колонки "year" (индекс 5) — диапазон 1900-2026
         if (column == 5) {
             int year = Integer.parseInt(strVal);
+
             if (year < 1900 || year > 2026) {
-                throw new InvalidYearException("Год основания должен быть в диапазоне от 1900 до 2026 года!");
+                throw new InvalidYearException(
+                        "Год основания должен быть в диапазоне от 1900 до 2026 года!"
+                );
             }
         }
     }
 
     /**
-     * Пересчитывает и обновляет порядковые номера (колонка №) для всех строк таблицы.
+     * Обновляет порядковые номера строк.
      */
     public void updateRowNumbers() {
         for (int i = 0; i < model.getRowCount(); i++) {
@@ -93,9 +84,7 @@ public class MusicGroupList {
     }
 
     /**
-     * Сортирует строки таблицы по выбранной колонке.
-     *
-     * @param columnIndex индекс колонки для сортировки
+     * Сортирует таблицу по выбранной колонке.
      */
     @SuppressWarnings("unchecked")
     private void sortTableByColumn(int columnIndex) {
@@ -110,7 +99,8 @@ public class MusicGroupList {
             sortAscending = true;
         }
 
-        Vector<Vector<Object>> data = (Vector) model.getDataVector();
+        Vector<Vector<Object>> data =
+                (Vector) model.getDataVector();
 
         data.sort((row1, row2) -> {
             Object val1 = row1.get(columnIndex);
@@ -121,10 +111,16 @@ public class MusicGroupList {
             if (val2 == null) return sortAscending ? 1 : -1;
 
             int cmp;
+
             if (val1 instanceof Number && val2 instanceof Number) {
-                cmp = Double.compare(((Number) val1).doubleValue(), ((Number) val2).doubleValue());
+                cmp = Double.compare(
+                        ((Number) val1).doubleValue(),
+                        ((Number) val2).doubleValue()
+                );
             } else {
-                cmp = val1.toString().compareToIgnoreCase(val2.toString());
+                cmp = val1.toString().compareToIgnoreCase(
+                        val2.toString()
+                );
             }
 
             return sortAscending ? cmp : -cmp;
@@ -135,7 +131,171 @@ public class MusicGroupList {
     }
 
     /**
-     * Метод построения и визуализации экранной формы.
+     * Сохраняет данные в текущем формате.
+     */
+    private void save() {
+        if ("xml".equals(currentFormat)) {
+            XmlFileManager.save(frame, model);
+        } else if ("txt".equals(currentFormat)) {
+            TextFileManager.save(frame, model);
+        } else {
+            saveAs();
+        }
+    }
+
+    /**
+     * Сохраняет данные с выбором формата.
+     */
+    private void saveAs() {
+        String[] formats = {"TXT", "XML"};
+
+        int choice = JOptionPane.showOptionDialog(
+                frame,
+                "Выберите формат файла:",
+                "Сохранить как",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                formats,
+                formats[0]
+        );
+
+        if (choice == 0) {
+            File file = chooseSaveFile("txt");
+
+            if (file != null
+                    && TextFileManager.saveToFile(frame, model, file)) {
+                currentFormat = "txt";
+            }
+
+        } else if (choice == 1) {
+            File file = chooseSaveFile("xml");
+
+            if (file != null
+                    && XmlFileManager.saveToFile(frame, model, file)) {
+                currentFormat = "xml";
+            }
+        }
+    }
+
+    /**
+     * Выбирает файл для сохранения.
+     */
+    private File chooseSaveFile(String format) {
+        JFileChooser chooser = new JFileChooser();
+
+        String extension = "." + format;
+
+        chooser.setDialogTitle("Сохранить файл");
+        chooser.setSelectedFile(
+                new File("music_groups" + extension)
+        );
+
+        chooser.setFileFilter(
+                new javax.swing.filechooser.FileNameExtensionFilter(
+                        format.toUpperCase() + " files (*" + extension + ")",
+                        format
+                )
+        );
+
+        if (chooser.showSaveDialog(frame)
+                != JFileChooser.APPROVE_OPTION) {
+            return null;
+        }
+
+        File file = chooser.getSelectedFile();
+
+        if (!file.getName().toLowerCase().endsWith(extension)) {
+            file = new File(file.getAbsolutePath() + extension);
+        }
+
+        if (file.exists()) {
+            int answer = JOptionPane.showConfirmDialog(
+                    frame,
+                    "Файл уже существует. Перезаписать его?",
+                    "Подтверждение",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (answer != JOptionPane.YES_OPTION) {
+                return null;
+            }
+        }
+
+        return file;
+    }
+
+    /**
+     * Импортирует TXT или XML через один диалог выбора файла.
+     */
+    private void importData() {
+        JFileChooser chooser = new JFileChooser();
+
+        chooser.setDialogTitle("Импорт данных");
+
+        chooser.setFileFilter(
+                new javax.swing.filechooser.FileNameExtensionFilter(
+                        "Поддерживаемые файлы (*.txt, *.xml)",
+                        "txt", "xml"
+                )
+        );
+
+        if (chooser.showOpenDialog(frame)
+                != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = chooser.getSelectedFile();
+        String fileName = file.getName().toLowerCase();
+
+        if (fileName.endsWith(".txt")) {
+            if (TextFileManager.importData(frame, model, file)) {
+                currentFormat = "txt";
+            }
+
+        } else if (fileName.endsWith(".xml")) {
+            if (XmlFileManager.importData(frame, model, file)) {
+                currentFormat = "xml";
+            }
+
+        } else {
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Выбран неподдерживаемый формат файла!",
+                    "Ошибка импорта",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    /**
+     * Создаёт меню File.
+     */
+    private JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenu fileMenu = new JMenu("File");
+
+        JMenuItem saveItem = new JMenuItem("Save");
+        JMenuItem saveAsItem = new JMenuItem("Save As...");
+        JMenuItem importItem = new JMenuItem("Import");
+
+        saveItem.addActionListener(e -> save());
+        saveAsItem.addActionListener(e -> saveAs());
+        importItem.addActionListener(e -> importData());
+
+        fileMenu.add(saveItem);
+        fileMenu.add(saveAsItem);
+        fileMenu.addSeparator();
+        fileMenu.add(importItem);
+
+        menuBar.add(fileMenu);
+
+        return menuBar;
+    }
+
+    /**
+     * Построение экранной формы.
      */
     public void show() {
 
@@ -145,41 +305,32 @@ public class MusicGroupList {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
-        // ВЕРХНЯЯ ПАНЕЛЬ ИНСТРУМЕНТОВ
+        frame.setJMenuBar(createMenuBar());
+
+        // ПАНЕЛЬ ИНСТРУМЕНТОВ
         toolBar = new JToolBar("Панель инструментов");
         toolBar.setFloatable(false);
         toolBar.setPreferredSize(new java.awt.Dimension(950, 60));
         toolBar.setMargin(new java.awt.Insets(5, 5, 5, 5));
 
-        JButton saveButton     = new JButton("Save");
-        JButton saveAsButton   = new JButton("Save As...");
-        JButton importButton   = new JButton("Import");
-        JButton deleteButton   = new JButton("Delete");
-        JButton findButton     = new JButton("Find");
-        JButton sortButton     = new JButton("Sort ▼");
-        JButton addButton      = new JButton("Add");
+        JButton deleteButton = new JButton("Delete");
+        JButton findButton = new JButton("Find");
+        JButton sortButton = new JButton("Sort ▼");
+        JButton addButton = new JButton("Add");
 
-        java.awt.Dimension btnSize = new java.awt.Dimension(500, 500);
-        saveButton.setPreferredSize(btnSize);
-        saveAsButton.setPreferredSize(btnSize);
-        importButton.setPreferredSize(btnSize);
+        java.awt.Dimension btnSize =
+                new java.awt.Dimension(500, 500);
+
         deleteButton.setPreferredSize(btnSize);
         findButton.setPreferredSize(btnSize);
         sortButton.setPreferredSize(btnSize);
         addButton.setPreferredSize(btnSize);
 
-        // Подсказки
-        saveButton.setToolTipText("Быстрое сохранение файла (Ctrl + S)");
-        saveAsButton.setToolTipText("Сохранить в новый текстовый файл...");
-        importButton.setToolTipText("Загрузить данные из текстового файла");
         deleteButton.setToolTipText("Удалить выбранную группу");
         findButton.setToolTipText("Поиск группы по названию");
         sortButton.setToolTipText("Сортировка по выбранной колонке");
         addButton.setToolTipText("Добавить новую группу");
 
-        toolBar.add(saveButton);
-        toolBar.add(saveAsButton);
-        toolBar.add(importButton);
         toolBar.add(deleteButton);
         toolBar.add(findButton);
         toolBar.add(sortButton);
@@ -187,28 +338,43 @@ public class MusicGroupList {
 
         frame.add(toolBar, BorderLayout.NORTH);
 
-        // ШАПКА ТАБЛИЦЫ
+        // СТОЛБЦЫ ТАБЛИЦЫ
         String[] columns = {
                 "№", "icon", "name", "rate",
                 "hit", "year", "leader", "more information"
         };
 
-        // ТАБЛИЦА (изначально пустая)
-        model = new DefaultTableModel(new Object[0][columns.length], columns) {
+        // МОДЕЛЬ ТАБЛИЦЫ
+        model = new DefaultTableModel(
+                new Object[0][columns.length],
+                columns
+        ) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column != 0 && column != 7;
             }
 
             @Override
-            public void setValueAt(Object aValue, int row, int column) {
+            public void setValueAt(
+                    Object aValue,
+                    int row,
+                    int column
+            ) {
                 try {
                     validateCellValue(column, aValue);
 
                     if (column == 0 || column == 3 || column == 5) {
-                        super.setValueAt(Integer.parseInt(aValue.toString().trim()), row, column);
+                        super.setValueAt(
+                                Integer.parseInt(aValue.toString().trim()),
+                                row,
+                                column
+                        );
                     } else {
-                        super.setValueAt(aValue.toString().trim(), row, column);
+                        super.setValueAt(
+                                aValue.toString().trim(),
+                                row,
+                                column
+                        );
                     }
 
                 } catch (NumberFormatException e) {
@@ -218,7 +384,11 @@ public class MusicGroupList {
                             "Ошибка типа данных",
                             JOptionPane.ERROR_MESSAGE
                     );
-                } catch (InvalidYearException | EmptyGroupNameException e) {
+
+                } catch (
+                        InvalidYearException
+                        | EmptyGroupNameException e
+                ) {
                     JOptionPane.showMessageDialog(
                             frame,
                             e.getMessage(),
@@ -233,36 +403,56 @@ public class MusicGroupList {
         scroll = new JScrollPane(table);
         frame.add(scroll, BorderLayout.CENTER);
 
-        // ВЫПАДАЮЩЕЕ МЕНЮ СОРТИРОВКИ
+        // МЕНЮ СОРТИРОВКИ
         JPopupMenu sortPopupMenu = new JPopupMenu();
+
         for (int i = 2; i <= 6; i++) {
             final int colIndex = i;
+
             JMenuItem item = new JMenuItem(columns[i]);
-            item.addActionListener(e -> sortTableByColumn(colIndex));
+
+            item.addActionListener(
+                    e -> sortTableByColumn(colIndex)
+            );
+
             sortPopupMenu.add(item);
         }
-        sortButton.addActionListener(e -> sortPopupMenu.show(sortButton, 0, sortButton.getHeight()));
+
+        sortButton.addActionListener(
+                e -> sortPopupMenu.show(
+                        sortButton, 0, sortButton.getHeight()
+                )
+        );
 
         // НИЖНЯЯ ПАНЕЛЬ
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel bottomPanel =
+                new JPanel(new FlowLayout(FlowLayout.LEFT));
+
         moreInformationButton = new JButton("?");
-        moreInformationButton.setToolTipText("Информация о программе");
+        moreInformationButton.setToolTipText(
+                "Информация о программе"
+        );
+
         bottomPanel.add(moreInformationButton);
 
-        // ОБРАБОТЧИКИ СОХРАНЕНИЯ И ИМПОРТА
-        saveButton.addActionListener(event -> TextFileManager.save(frame, model));
-        saveAsButton.addActionListener(event -> TextFileManager.saveAs(frame, model));
-        importButton.addActionListener(event -> TextFileManager.importData(frame, model));
+        // CTRL + S
+        KeyStroke ctrlS = KeyStroke.getKeyStroke(
+                KeyEvent.VK_S,
+                KeyEvent.CTRL_DOWN_MASK
+        );
 
-        // ГОРЯЧАЯ КЛАВИША CTRL + S
-        KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK);
-        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlS, "saveShortcut");
-        frame.getRootPane().getActionMap().put("saveShortcut", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                TextFileManager.save(frame, model);
-            }
-        });
+        frame.getRootPane()
+                .getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(ctrlS, "saveShortcut");
+
+        frame.getRootPane()
+                .getActionMap()
+                .put("saveShortcut", new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        save();
+                    }
+                });
 
         // ПОИСК
         findButton.addActionListener(event -> {
@@ -279,9 +469,16 @@ public class MusicGroupList {
 
             for (int i = 0; i < model.getRowCount(); i++) {
                 Object nameVal = model.getValueAt(i, 2);
-                if (nameVal != null && nameVal.toString().toLowerCase().contains(query.trim().toLowerCase())) {
+
+                if (nameVal != null
+                        && nameVal.toString().toLowerCase()
+                        .contains(query.trim().toLowerCase())) {
+
                     table.setRowSelectionInterval(i, i);
-                    table.scrollRectToVisible(table.getCellRect(i, 0, true));
+                    table.scrollRectToVisible(
+                            table.getCellRect(i, 0, true)
+                    );
+
                     return;
                 }
             }
@@ -294,9 +491,10 @@ public class MusicGroupList {
             );
         });
 
-        // УДАЛЕНИЕ СТРОКИ
+        // УДАЛЕНИЕ
         deleteButton.addActionListener(event -> {
             int row = table.getSelectedRow();
+
             if (row == -1) {
                 JOptionPane.showMessageDialog(
                         frame,
@@ -310,51 +508,62 @@ public class MusicGroupList {
             }
         });
 
-        // ДОБАВЛЕНИЕ СТРОКИ
+        // ДОБАВЛЕНИЕ
         addButton.addActionListener(event -> {
             int newNumber = model.getRowCount() + 1;
+
             model.addRow(new Object[]{
-                    newNumber, "", "Новая группа", 0, "", 2024, "", "Подробнее"
+                    newNumber, "", "Новая группа",
+                    0, "", 2024, "", "Подробнее"
             });
+
             updateRowNumbers();
         });
 
-        // КНОПКА ПОМОЩИ
-        moreInformationButton.addActionListener(event -> JOptionPane.showMessageDialog(
-                frame,
-                "Программа учёта музыкальных групп.\nГорячие клавиши:\n[Ctrl + S] — быстрое сохранение",
-                "О программе",
-                JOptionPane.INFORMATION_MESSAGE
-        ));
+        // СПРАВКА
+        moreInformationButton.addActionListener(event ->
+                JOptionPane.showMessageDialog(
+                        frame,
+                        "Программа учёта музыкальных групп.\n"
+                                + "Горячие клавиши:\n"
+                                + "[Ctrl + S] — быстрое сохранение",
+                        "О программе",
+                        JOptionPane.INFORMATION_MESSAGE
+                )
+        );
 
-        // КЛИК ПО ЯЧЕЙКЕ "more information" (индекс 7)
-        table.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent event) {
-                int row = table.getSelectedRow();
-                int col = table.getSelectedColumn();
+        // КЛИК ПО ЯЧЕЙКЕ MORE INFORMATION
+        table.addMouseListener(
+                new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseClicked(
+                            java.awt.event.MouseEvent event
+                    ) {
+                        int row = table.getSelectedRow();
+                        int col = table.getSelectedColumn();
 
-                if (col == 7 && row >= 0) {
-                    Object name   = model.getValueAt(row, 2);
-                    Object rate   = model.getValueAt(row, 3);
-                    Object hit    = model.getValueAt(row, 4);
-                    Object year   = model.getValueAt(row, 5);
-                    Object leader = model.getValueAt(row, 6);
+                        if (col == 7 && row >= 0) {
+                            Object name = model.getValueAt(row, 2);
+                            Object rate = model.getValueAt(row, 3);
+                            Object hit = model.getValueAt(row, 4);
+                            Object year = model.getValueAt(row, 5);
+                            Object leader = model.getValueAt(row, 6);
 
-                    JOptionPane.showMessageDialog(
-                            frame,
-                            "Информация о группе:\n\n" +
-                            "🎸 Название: " + name + "\n" +
-                            "🎤 Лидер / Вокал: " + leader + "\n" +
-                            "📅 Год основания: " + year + "\n" +
-                            "🔥 Главный хит: " + hit + "\n" +
-                            "⭐ Рейтинг: " + rate + " / 5",
-                            "Карточка: " + name,
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
+                            JOptionPane.showMessageDialog(
+                                    frame,
+                                    "Информация о группе:\n\n"
+                                            + "🎸 Название: " + name + "\n"
+                                            + "🎤 Лидер / Вокал: " + leader + "\n"
+                                            + "📅 Год основания: " + year + "\n"
+                                            + "🔥 Главный хит: " + hit + "\n"
+                                            + "⭐ Рейтинг: " + rate + " / 5",
+                                    "Карточка: " + name,
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                        }
+                    }
                 }
-            }
-        });
+        );
 
         frame.add(bottomPanel, BorderLayout.SOUTH);
         frame.setVisible(true);
