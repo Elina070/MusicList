@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<musicGroups>
+    <group icon="" name="The Beatles" rate="5" hit="Hey Jude" year="1960" leader="John Lennon"/>
+    <group icon="" name="Queen" rate="5" hit="Bohemian Rhapsody" year="1970" leader="Freddie Mercury"/>
+    <group icon="" name="Nirvana" rate="4" hit="Smells Like Teen Spirit" year="1987" leader="Kurt Cobain"/>
+</musicGroups>
