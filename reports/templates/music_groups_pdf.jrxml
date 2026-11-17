@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="MusicGroupsPDF" pageWidth="595" pageHeight="842" columnWidth="515"
+              leftMargin="40" rightMargin="40" topMargin="35" bottomMargin="35"
+              whenNoDataType="AllSectionsNoDetail" uuid="8f9e5a31-6df4-4a19-9d50-000000000701">
+    <queryString language="xPath"><![CDATA[/musicGroups/group]]></queryString>
+    <field name="name" class="java.lang.String"><fieldDescription><![CDATA[@name]]></fieldDescription></field>
+    <field name="rate" class="java.lang.String"><fieldDescription><![CDATA[@rate]]></fieldDescription></field>
+    <field name="hit" class="java.lang.String"><fieldDescription><![CDATA[@hit]]></fieldDescription></field>
+    <field name="year" class="java.lang.String"><fieldDescription><![CDATA[@year]]></fieldDescription></field>
+    <field name="leader" class="java.lang.String"><fieldDescription><![CDATA[@leader]]></fieldDescription></field>
+    <title>
+        <band height="78">
+            <staticText><reportElement x="0" y="0" width="515" height="32"/><textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="SansSerif" size="20" isBold="true"/></textElement><text><![CDATA[Music Groups Catalog]]></text></staticText>
+            <staticText><reportElement x="0" y="38" width="515" height="20"/><textElement textAlignment="Center"><font size="10" isItalic="true"/></textElement><text><![CDATA[Список музыкальных групп]]></text></staticText>
+            <line><reportElement x="0" y="67" width="515" height="1"/></line>
+        </band>
+    </title>
+    <columnHeader>
+        <band height="28">
+            <staticText><reportElement mode="Opaque" x="0" y="0" width="145" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Название]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="145" y="0" width="55" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Рейтинг]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="200" y="0" width="70" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Год]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="270" y="0" width="125" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Лидер]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="395" y="0" width="120" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Хит]]></text></staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="26">
+            <textField isStretchWithOverflow="true"><reportElement x="0" y="0" width="145" height="25"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{name}]]></textFieldExpression></textField>
+            <textField><reportElement x="145" y="0" width="55" height="25"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{rate}]]></textFieldExpression></textField>
+            <textField><reportElement x="200" y="0" width="70" height="25"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{year}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="270" y="0" width="125" height="25"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{leader}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="395" y="0" width="120" height="25"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{hit}]]></textFieldExpression></textField>
+        </band>
+    </detail>
+    <pageFooter>
+        <band height="22">
+            <line><reportElement x="0" y="0" width="515" height="1"/></line>
+            <textField><reportElement x="415" y="4" width="100" height="16"/><textElement textAlignment="Right"><font size="8"/></textElement><textFieldExpression><![CDATA["Страница " + $V{PAGE_NUMBER}]]></textFieldExpression></textField>
+        </band>
+    </pageFooter>
+</jasperReport>
