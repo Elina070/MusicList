@@ -6,36 +6,53 @@
               leftMargin="40" rightMargin="40" topMargin="35" bottomMargin="35"
               whenNoDataType="AllSectionsNoDetail" uuid="8f9e5a31-6df4-4a19-9d50-000000000701">
     <queryString language="xPath"><![CDATA[/musicGroups/group]]></queryString>
+    <field name="icon" class="java.lang.String"><fieldDescription><![CDATA[@icon]]></fieldDescription></field>
     <field name="name" class="java.lang.String"><fieldDescription><![CDATA[@name]]></fieldDescription></field>
     <field name="rate" class="java.lang.String"><fieldDescription><![CDATA[@rate]]></fieldDescription></field>
     <field name="hit" class="java.lang.String"><fieldDescription><![CDATA[@hit]]></fieldDescription></field>
     <field name="year" class="java.lang.String"><fieldDescription><![CDATA[@year]]></fieldDescription></field>
     <field name="leader" class="java.lang.String"><fieldDescription><![CDATA[@leader]]></fieldDescription></field>
+
     <title>
-        <band height="78">
-            <staticText><reportElement x="0" y="0" width="515" height="32"/><textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="SansSerif" size="20" isBold="true"/></textElement><text><![CDATA[Music Groups Catalog]]></text></staticText>
-            <staticText><reportElement x="0" y="38" width="515" height="20"/><textElement textAlignment="Center"><font size="10" isItalic="true"/></textElement><text><![CDATA[Список музыкальных групп]]></text></staticText>
-            <line><reportElement x="0" y="67" width="515" height="1"/></line>
+        <band height="72">
+            <staticText>
+                <reportElement x="0" y="0" width="515" height="34"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="Serif" size="20" isBold="true"/></textElement>
+                <text><![CDATA[Музыкальные группы]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="36" width="515" height="22"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="Serif" size="11"/></textElement>
+                <text><![CDATA[Список групп]]></text>
+            </staticText>
+            <line><reportElement x="0" y="66" width="515" height="1"/></line>
         </band>
     </title>
+
     <columnHeader>
-        <band height="28">
-            <staticText><reportElement mode="Opaque" x="0" y="0" width="145" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Название]]></text></staticText>
-            <staticText><reportElement mode="Opaque" x="145" y="0" width="55" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Рейтинг]]></text></staticText>
-            <staticText><reportElement mode="Opaque" x="200" y="0" width="70" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Год]]></text></staticText>
-            <staticText><reportElement mode="Opaque" x="270" y="0" width="125" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Лидер]]></text></staticText>
-            <staticText><reportElement mode="Opaque" x="395" y="0" width="120" height="25" backcolor="#DCE6F1"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font isBold="true"/></textElement><text><![CDATA[Хит]]></text></staticText>
+        <band height="42">
+            <staticText><reportElement mode="Opaque" x="0" y="0" width="25" height="40" backcolor="#E2E2E2"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true" size="8"/></textElement><text><![CDATA[№]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="25" y="0" width="40" height="40" backcolor="#E2E2E2"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true" size="8"/></textElement><text><![CDATA[Иконка]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="65" y="0" width="110" height="40" backcolor="#E2E2E2"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true" size="8"/></textElement><text><![CDATA[Название группы]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="175" y="0" width="45" height="40" backcolor="#E2E2E2"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true" size="8"/></textElement><text><![CDATA[Рейтинг]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="220" y="0" width="105" height="40" backcolor="#E2E2E2"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true" size="8"/></textElement><text><![CDATA[Главный хит]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="325" y="0" width="65" height="40" backcolor="#E2E2E2"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true" size="8"/></textElement><text><![CDATA[Год основания]]></text></staticText>
+            <staticText><reportElement mode="Opaque" x="390" y="0" width="125" height="40" backcolor="#E2E2E2"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true" size="8"/></textElement><text><![CDATA[Лидер]]></text></staticText>
         </band>
     </columnHeader>
+
     <detail>
-        <band height="26">
-            <textField isStretchWithOverflow="true"><reportElement x="0" y="0" width="145" height="25"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{name}]]></textFieldExpression></textField>
-            <textField><reportElement x="145" y="0" width="55" height="25"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{rate}]]></textFieldExpression></textField>
-            <textField><reportElement x="200" y="0" width="70" height="25"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{year}]]></textFieldExpression></textField>
-            <textField isStretchWithOverflow="true"><reportElement x="270" y="0" width="125" height="25"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{leader}]]></textFieldExpression></textField>
-            <textField isStretchWithOverflow="true"><reportElement x="395" y="0" width="120" height="25"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{hit}]]></textFieldExpression></textField>
+        <band height="34">
+            <textField><reportElement x="0" y="0" width="25" height="34"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$V{REPORT_COUNT}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="25" y="0" width="40" height="34"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{icon} == null || $F{icon}.length() == 0 ? "—" : $F{icon}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="65" y="0" width="110" height="34"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{name}]]></textFieldExpression></textField>
+            <textField><reportElement x="175" y="0" width="45" height="34"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{rate}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="220" y="0" width="105" height="34"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{hit}]]></textFieldExpression></textField>
+            <textField><reportElement x="325" y="0" width="65" height="34"/><box><pen lineWidth="0.5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{year}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="390" y="0" width="125" height="34"/><box><pen lineWidth="0.5"/></box><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{leader}]]></textFieldExpression></textField>
         </band>
     </detail>
+
     <pageFooter>
         <band height="22">
             <line><reportElement x="0" y="0" width="515" height="1"/></line>
