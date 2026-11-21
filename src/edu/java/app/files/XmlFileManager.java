@@ -20,6 +20,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import java.awt.FileDialog;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class XmlFileManager {
      * Сохраняет данные в последний использованный XML-файл.
      */
     public static void save(JFrame frame, DefaultTableModel model) {
+
         if (currentFilePath == null) {
             saveAs(frame, model);
             return;
@@ -56,6 +58,7 @@ public class XmlFileManager {
             DefaultTableModel model,
             File file
     ) {
+
         if (model.getRowCount() == 0) {
             JOptionPane.showMessageDialog(
                     frame,
@@ -63,6 +66,7 @@ public class XmlFileManager {
                     "Предупреждение",
                     JOptionPane.WARNING_MESSAGE
             );
+
             return false;
         }
 
@@ -77,6 +81,7 @@ public class XmlFileManager {
             document.appendChild(root);
 
             for (int i = 0; i < model.getRowCount(); i++) {
+
                 Element group = document.createElement("group");
                 root.appendChild(group);
 
@@ -112,7 +117,10 @@ public class XmlFileManager {
             );
 
             currentFilePath = file.getAbsolutePath();
-            frame.setTitle("Music group list - " + file.getName());
+
+            frame.setTitle(
+                    "Music group list - " + file.getName()
+            );
 
             JOptionPane.showMessageDialog(
                     frame,
@@ -124,6 +132,7 @@ public class XmlFileManager {
             return true;
 
         } catch (ParserConfigurationException | TransformerException e) {
+
             JOptionPane.showMessageDialog(
                     frame,
                     "Ошибка сохранения XML-файла:\n" + e.getMessage(),
@@ -136,33 +145,38 @@ public class XmlFileManager {
     }
 
     /**
-     * Открывает диалог сохранения XML-файла.
+     * Открывает системный диалог Windows для сохранения XML-файла.
      */
     public static void saveAs(JFrame frame, DefaultTableModel model) {
-        javax.swing.JFileChooser chooser =
-                new javax.swing.JFileChooser();
 
-        chooser.setDialogTitle("Сохранить XML-файл");
-        chooser.setSelectedFile(new File("music_groups.xml"));
-
-        chooser.setFileFilter(
-                new javax.swing.filechooser.FileNameExtensionFilter(
-                        "XML files (*.xml)", "xml"
-                )
+        FileDialog dialog = new FileDialog(
+                frame,
+                "Сохранить XML-файл",
+                FileDialog.SAVE
         );
 
-        if (chooser.showSaveDialog(frame)
-                != javax.swing.JFileChooser.APPROVE_OPTION) {
+        dialog.setFile("music_groups.xml");
+
+        dialog.setVisible(true);
+
+        String directory = dialog.getDirectory();
+        String fileName = dialog.getFile();
+
+        // Пользователь нажал Cancel.
+        if (directory == null || fileName == null) {
             return;
         }
 
-        File file = chooser.getSelectedFile();
+        File file = new File(directory, fileName);
 
+        // Добавляем расширение XML, если оно не указано.
         if (!file.getName().toLowerCase().endsWith(".xml")) {
             file = new File(file.getAbsolutePath() + ".xml");
         }
 
+        // Проверяем существование файла.
         if (file.exists()) {
+
             int answer = JOptionPane.showConfirmDialog(
                     frame,
                     "Файл уже существует. Перезаписать его?",
@@ -186,6 +200,7 @@ public class XmlFileManager {
             DefaultTableModel model,
             File file
     ) {
+
         try {
             DocumentBuilderFactory factory =
                     DocumentBuilderFactory.newInstance();
@@ -231,6 +246,7 @@ public class XmlFileManager {
             List<Object[]> importedRows = new ArrayList<>();
 
             for (int i = 0; i < groups.getLength(); i++) {
+
                 Element group = (Element) groups.item(i);
 
                 String icon = getAttribute(group, "icon");
@@ -274,7 +290,10 @@ public class XmlFileManager {
             }
 
             currentFilePath = file.getAbsolutePath();
-            frame.setTitle("Music group list - " + file.getName());
+
+            frame.setTitle(
+                    "Music group list - " + file.getName()
+            );
 
             JOptionPane.showMessageDialog(
                     frame,
@@ -301,19 +320,28 @@ public class XmlFileManager {
         }
     }
 
+    /**
+     * Получает значение ячейки таблицы в виде строки.
+     */
     private static String getValue(
             DefaultTableModel model,
             int row,
             int column
     ) {
+
         Object value = model.getValueAt(row, column);
+
         return value == null ? "" : value.toString();
     }
 
+    /**
+     * Получает значение XML-атрибута.
+     */
     private static String getAttribute(
             Element element,
             String attributeName
     ) {
+
         if (!element.hasAttribute(attributeName)) {
             throw new IllegalArgumentException(
                     "Отсутствует XML-атрибут: " + attributeName

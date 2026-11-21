@@ -8,6 +8,8 @@ import edu.java.app.files.XmlFileManager;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -20,7 +22,7 @@ import javax.swing.table.DefaultTableModel;
  * Экранная форма "Music group list".
  *
  * @author Оганнисян Э. А.
- * @version 1.6
+ * @version 1.7
  */
 public class MusicGroupList {
 
@@ -179,36 +181,37 @@ public class MusicGroupList {
     }
 
     /**
-     * Выбирает файл для сохранения.
+     * Открывает системный диалог Windows для сохранения файла.
      */
     private File chooseSaveFile(String format) {
-        JFileChooser chooser = new JFileChooser();
 
         String extension = "." + format;
 
-        chooser.setDialogTitle("Сохранить файл");
-        chooser.setSelectedFile(
-                new File("music_groups" + extension)
+        FileDialog dialog = new FileDialog(
+                frame,
+                "Сохранить файл",
+                FileDialog.SAVE
         );
 
-        chooser.setFileFilter(
-                new javax.swing.filechooser.FileNameExtensionFilter(
-                        format.toUpperCase() + " files (*" + extension + ")",
-                        format
-                )
-        );
+        dialog.setFile("music_groups" + extension);
+        dialog.setVisible(true);
 
-        if (chooser.showSaveDialog(frame)
-                != JFileChooser.APPROVE_OPTION) {
+        String directory = dialog.getDirectory();
+        String fileName = dialog.getFile();
+
+        // Пользователь нажал Cancel.
+        if (directory == null || fileName == null) {
             return null;
         }
 
-        File file = chooser.getSelectedFile();
+        File file = new File(directory, fileName);
 
+        // Добавляем расширение, если пользователь его не указал.
         if (!file.getName().toLowerCase().endsWith(extension)) {
             file = new File(file.getAbsolutePath() + extension);
         }
 
+        // Проверяем существование файла.
         if (file.exists()) {
             int answer = JOptionPane.showConfirmDialog(
                     frame,
@@ -226,43 +229,54 @@ public class MusicGroupList {
     }
 
     /**
-     * Импортирует TXT или XML через один диалог выбора файла.
+     * Импортирует TXT или XML через системный проводник Windows.
      */
     private void importData() {
-        JFileChooser chooser = new JFileChooser();
 
-        chooser.setDialogTitle("Импорт данных");
-
-        chooser.setFileFilter(
-                new javax.swing.filechooser.FileNameExtensionFilter(
-                        "Поддерживаемые файлы (*.txt, *.xml)",
-                        "txt", "xml"
-                )
+        FileDialog dialog = new FileDialog(
+                frame,
+                "Импорт данных",
+                FileDialog.LOAD
         );
 
-        if (chooser.showOpenDialog(frame)
-                != JFileChooser.APPROVE_OPTION) {
+        dialog.setFilenameFilter((directory, name) -> {
+            String lowerName = name.toLowerCase();
+
+            return lowerName.endsWith(".txt")
+                    || lowerName.endsWith(".xml");
+        });
+
+        dialog.setVisible(true);
+
+        String directory = dialog.getDirectory();
+        String fileName = dialog.getFile();
+
+        // Пользователь нажал Cancel.
+        if (directory == null || fileName == null) {
             return;
         }
 
-        File file = chooser.getSelectedFile();
-        String fileName = file.getName().toLowerCase();
+        File file = new File(directory, fileName);
+        String lowerFileName = file.getName().toLowerCase();
 
-        if (fileName.endsWith(".txt")) {
+        if (lowerFileName.endsWith(".txt")) {
+
             if (TextFileManager.importData(frame, model, file)) {
                 currentFormat = "txt";
             }
 
-        } else if (fileName.endsWith(".xml")) {
+        } else if (lowerFileName.endsWith(".xml")) {
+
             if (XmlFileManager.importData(frame, model, file)) {
                 currentFormat = "xml";
             }
 
         } else {
+
             JOptionPane.showMessageDialog(
                     frame,
                     "Выбран неподдерживаемый формат файла!",
-                    "Ошибка импорта",
+                    "Ошибка",
                     JOptionPane.ERROR_MESSAGE
             );
         }
@@ -272,9 +286,18 @@ public class MusicGroupList {
      * Создаёт меню File.
      */
     private JMenuBar createMenuBar() {
+
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
+
+        fileMenu.setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        25
+                )
+        );
 
         JMenuItem saveItem = new JMenuItem("Save");
         JMenuItem saveAsItem = new JMenuItem("Save As...");
@@ -299,9 +322,23 @@ public class MusicGroupList {
      */
     public void show() {
 
+        // ОБЩИЕ ШРИФТЫ ИНТЕРФЕЙСА
+        java.awt.Font menuFont =
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.PLAIN,
+                        18
+                );
+
+        UIManager.put("Menu.font", menuFont);
+        UIManager.put("MenuItem.font", menuFont);
+        UIManager.put("OptionPane.messageFont", menuFont);
+        UIManager.put("OptionPane.buttonFont", menuFont);
+        UIManager.put("Label.font", menuFont);
+
         frame = new JFrame("Music group list");
-        frame.setSize(950, 550);
-        frame.setLocation(200, 100);
+        frame.setSize(1200, 750);
+        frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
@@ -310,21 +347,40 @@ public class MusicGroupList {
         // ПАНЕЛЬ ИНСТРУМЕНТОВ
         toolBar = new JToolBar("Панель инструментов");
         toolBar.setFloatable(false);
-        toolBar.setPreferredSize(new java.awt.Dimension(950, 60));
-        toolBar.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        toolBar.setLayout(new GridLayout(1, 4, 3, 0));
+        toolBar.setPreferredSize(
+                new java.awt.Dimension(1200, 85)
+        );
+        toolBar.setBorder(
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        );
 
         JButton deleteButton = new JButton("Delete");
         JButton findButton = new JButton("Find");
         JButton sortButton = new JButton("Sort ▼");
         JButton addButton = new JButton("Add");
 
-        java.awt.Dimension btnSize =
-                new java.awt.Dimension(500, 500);
+        java.awt.Font btnFont =
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        20
+                );
 
-        deleteButton.setPreferredSize(btnSize);
-        findButton.setPreferredSize(btnSize);
-        sortButton.setPreferredSize(btnSize);
-        addButton.setPreferredSize(btnSize);
+        JButton[] buttons = {
+                deleteButton,
+                findButton,
+                sortButton,
+                addButton
+        };
+
+        for (JButton button : buttons) {
+            button.setFont(btnFont);
+            button.setFocusPainted(false);
+            button.setMargin(
+                    new java.awt.Insets(10, 15, 10, 15)
+            );
+        }
 
         deleteButton.setToolTipText("Удалить выбранную группу");
         findButton.setToolTipText("Поиск группы по названию");
@@ -399,7 +455,33 @@ public class MusicGroupList {
             }
         };
 
+        // ТАБЛИЦА
         table = new JTable(model);
+
+        table.setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.PLAIN,
+                        18
+                )
+        );
+
+        table.setRowHeight(38);
+
+        table.getTableHeader().setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        17
+                )
+        );
+
+        table.getTableHeader().setPreferredSize(
+                new java.awt.Dimension(0, 42)
+        );
+
+        table.getTableHeader().setReorderingAllowed(false);
+
         scroll = new JScrollPane(table);
         frame.add(scroll, BorderLayout.CENTER);
 
@@ -410,6 +492,7 @@ public class MusicGroupList {
             final int colIndex = i;
 
             JMenuItem item = new JMenuItem(columns[i]);
+            item.setFont(menuFont);
 
             item.addActionListener(
                     e -> sortTableByColumn(colIndex)
@@ -429,6 +512,14 @@ public class MusicGroupList {
                 new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         moreInformationButton = new JButton("?");
+        moreInformationButton.setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        18
+                )
+        );
+
         moreInformationButton.setToolTipText(
                 "Информация о программе"
         );
@@ -456,6 +547,7 @@ public class MusicGroupList {
 
         // ПОИСК
         findButton.addActionListener(event -> {
+
             String query = JOptionPane.showInputDialog(
                     frame,
                     "Введите название группы:",
@@ -475,6 +567,7 @@ public class MusicGroupList {
                         .contains(query.trim().toLowerCase())) {
 
                     table.setRowSelectionInterval(i, i);
+
                     table.scrollRectToVisible(
                             table.getCellRect(i, 0, true)
                     );
@@ -493,6 +586,7 @@ public class MusicGroupList {
 
         // УДАЛЕНИЕ
         deleteButton.addActionListener(event -> {
+
             int row = table.getSelectedRow();
 
             if (row == -1) {
@@ -510,6 +604,7 @@ public class MusicGroupList {
 
         // ДОБАВЛЕНИЕ
         addButton.addActionListener(event -> {
+
             int newNumber = model.getRowCount() + 1;
 
             model.addRow(new Object[]{
