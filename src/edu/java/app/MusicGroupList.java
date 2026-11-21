@@ -9,6 +9,7 @@ import edu.java.app.ThreadedReportGenerator;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -21,7 +22,7 @@ import javax.swing.table.DefaultTableModel;
  * Экранная форма "Music group list".
  *
  * @author Оганнисян Э. А.
- * @version 1.6
+ * @version 1.7
  */
 public class MusicGroupList {
 
@@ -277,6 +278,13 @@ public class MusicGroupList {
 
         JMenu fileMenu = new JMenu("File");
 
+        fileMenu.setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        25
+                )
+        );
         JMenuItem saveItem = new JMenuItem("Save");
         JMenuItem saveAsItem = new JMenuItem("Save As...");
         JMenuItem importItem = new JMenuItem("Import");
@@ -285,17 +293,22 @@ public class MusicGroupList {
         saveItem.addActionListener(e -> save());
         saveAsItem.addActionListener(e -> saveAs());
         importItem.addActionListener(e -> importData());
+
         reportItem.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Выберите исходный XML-файл");
+
             chooser.setFileFilter(
                     new javax.swing.filechooser.FileNameExtensionFilter(
                             "XML files (*.xml)", "xml"
                     )
             );
 
-            if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
-                ThreadedReportGenerator.start(frame, model, chooser.getSelectedFile());
+            if (chooser.showOpenDialog(frame)
+                    == JFileChooser.APPROVE_OPTION) {
+                ThreadedReportGenerator.start(
+                        frame, model, chooser.getSelectedFile()
+                );
             }
         });
 
@@ -316,19 +329,19 @@ public class MusicGroupList {
      */
     public void show() {
 
-        // Увеличиваем шрифт стандартных компонентов Swing.
-        java.awt.Font uiFont = new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14);
-        UIManager.put("Button.font", uiFont);
-        UIManager.put("Menu.font", uiFont);
-        UIManager.put("MenuItem.font", uiFont);
-        UIManager.put("Label.font", uiFont);
-        UIManager.put("Table.font", uiFont);
-        UIManager.put("TableHeader.font", uiFont);
-        UIManager.put("OptionPane.messageFont", uiFont);
+        // ОБЩИЕ ШРИФТЫ ИНТЕРФЕЙСА
+        java.awt.Font menuFont =
+                new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 18);
+
+        UIManager.put("Menu.font", menuFont);
+        UIManager.put("MenuItem.font", menuFont);
+        UIManager.put("OptionPane.messageFont", menuFont);
+        UIManager.put("OptionPane.buttonFont", menuFont);
+        UIManager.put("Label.font", menuFont);
 
         frame = new JFrame("Music group list");
-        frame.setSize(950, 550);
-        frame.setLocation(200, 100);
+        frame.setSize(1200, 750);
+        frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
@@ -337,27 +350,40 @@ public class MusicGroupList {
         // ПАНЕЛЬ ИНСТРУМЕНТОВ
         toolBar = new JToolBar("Панель инструментов");
         toolBar.setFloatable(false);
-        toolBar.setPreferredSize(new java.awt.Dimension(950, 58));
-        toolBar.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        toolBar.setLayout(new GridLayout(1, 4, 3, 0));
+        toolBar.setPreferredSize(
+                new java.awt.Dimension(1200, 85)
+        );
+        toolBar.setBorder(
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        );
 
         JButton deleteButton = new JButton("Delete");
         JButton findButton = new JButton("Find");
         JButton sortButton = new JButton("Sort ▼");
         JButton addButton = new JButton("Add");
 
-        java.awt.Dimension btnSize =
-                new java.awt.Dimension(105, 38);
+        java.awt.Font btnFont =
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        20
+                );
 
-        deleteButton.setPreferredSize(btnSize);
-        findButton.setPreferredSize(btnSize);
-        sortButton.setPreferredSize(btnSize);
-        addButton.setPreferredSize(btnSize);
+        JButton[] buttons = {
+                deleteButton,
+                findButton,
+                sortButton,
+                addButton
+        };
 
-        java.awt.Insets buttonMargin = new java.awt.Insets(7, 12, 7, 12);
-        deleteButton.setMargin(buttonMargin);
-        findButton.setMargin(buttonMargin);
-        sortButton.setMargin(buttonMargin);
-        addButton.setMargin(buttonMargin);
+        for (JButton button : buttons) {
+            button.setFont(btnFont);
+            button.setFocusPainted(false);
+            button.setMargin(
+                    new java.awt.Insets(10, 15, 10, 15)
+            );
+        }
 
         deleteButton.setToolTipText("Удалить выбранную группу");
         findButton.setToolTipText("Поиск группы по названию");
@@ -432,7 +458,33 @@ public class MusicGroupList {
             }
         };
 
+        // ТАБЛИЦА
         table = new JTable(model);
+
+        table.setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.PLAIN,
+                        18
+                )
+        );
+
+        table.setRowHeight(38);
+
+        table.getTableHeader().setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        17
+                )
+        );
+
+        table.getTableHeader().setPreferredSize(
+                new java.awt.Dimension(0, 42)
+        );
+
+        table.getTableHeader().setReorderingAllowed(false);
+
         scroll = new JScrollPane(table);
         frame.add(scroll, BorderLayout.CENTER);
 
@@ -443,6 +495,7 @@ public class MusicGroupList {
             final int colIndex = i;
 
             JMenuItem item = new JMenuItem(columns[i]);
+            item.setFont(menuFont);
 
             item.addActionListener(
                     e -> sortTableByColumn(colIndex)
@@ -462,6 +515,14 @@ public class MusicGroupList {
                 new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         moreInformationButton = new JButton("?");
+        moreInformationButton.setFont(
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.BOLD,
+                        18
+                )
+        );
+
         moreInformationButton.setToolTipText(
                 "Информация о программе"
         );
