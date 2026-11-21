@@ -316,6 +316,16 @@ public class MusicGroupList {
      */
     public void show() {
 
+        // Увеличиваем шрифт стандартных компонентов Swing.
+        java.awt.Font uiFont = new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14);
+        UIManager.put("Button.font", uiFont);
+        UIManager.put("Menu.font", uiFont);
+        UIManager.put("MenuItem.font", uiFont);
+        UIManager.put("Label.font", uiFont);
+        UIManager.put("Table.font", uiFont);
+        UIManager.put("TableHeader.font", uiFont);
+        UIManager.put("OptionPane.messageFont", uiFont);
+
         frame = new JFrame("Music group list");
         frame.setSize(950, 550);
         frame.setLocation(200, 100);
@@ -327,7 +337,7 @@ public class MusicGroupList {
         // ПАНЕЛЬ ИНСТРУМЕНТОВ
         toolBar = new JToolBar("Панель инструментов");
         toolBar.setFloatable(false);
-        toolBar.setPreferredSize(new java.awt.Dimension(950, 60));
+        toolBar.setPreferredSize(new java.awt.Dimension(950, 58));
         toolBar.setMargin(new java.awt.Insets(5, 5, 5, 5));
 
         JButton deleteButton = new JButton("Delete");
@@ -336,12 +346,18 @@ public class MusicGroupList {
         JButton addButton = new JButton("Add");
 
         java.awt.Dimension btnSize =
-                new java.awt.Dimension(500, 500);
+                new java.awt.Dimension(105, 38);
 
         deleteButton.setPreferredSize(btnSize);
         findButton.setPreferredSize(btnSize);
         sortButton.setPreferredSize(btnSize);
         addButton.setPreferredSize(btnSize);
+
+        java.awt.Insets buttonMargin = new java.awt.Insets(7, 12, 7, 12);
+        deleteButton.setMargin(buttonMargin);
+        findButton.setMargin(buttonMargin);
+        sortButton.setMargin(buttonMargin);
+        addButton.setMargin(buttonMargin);
 
         deleteButton.setToolTipText("Удалить выбранную группу");
         findButton.setToolTipText("Поиск группы по названию");
