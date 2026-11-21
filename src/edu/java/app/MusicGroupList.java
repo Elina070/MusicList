@@ -5,6 +5,7 @@ import edu.java.app.exceptions.EmptyGroupNameException;
 import edu.java.app.exceptions.InvalidYearException;
 import edu.java.app.files.TextFileManager;
 import edu.java.app.files.XmlFileManager;
+import edu.java.app.ThreadedReportGenerator;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -279,15 +280,31 @@ public class MusicGroupList {
         JMenuItem saveItem = new JMenuItem("Save");
         JMenuItem saveAsItem = new JMenuItem("Save As...");
         JMenuItem importItem = new JMenuItem("Import");
+        JMenuItem reportItem = new JMenuItem("Generate HTML report...");
 
         saveItem.addActionListener(e -> save());
         saveAsItem.addActionListener(e -> saveAs());
         importItem.addActionListener(e -> importData());
+        reportItem.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Выберите исходный XML-файл");
+            chooser.setFileFilter(
+                    new javax.swing.filechooser.FileNameExtensionFilter(
+                            "XML files (*.xml)", "xml"
+                    )
+            );
+
+            if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
+                ThreadedReportGenerator.start(frame, model, chooser.getSelectedFile());
+            }
+        });
 
         fileMenu.add(saveItem);
         fileMenu.add(saveAsItem);
         fileMenu.addSeparator();
         fileMenu.add(importItem);
+        fileMenu.addSeparator();
+        fileMenu.add(reportItem);
 
         menuBar.add(fileMenu);
 
