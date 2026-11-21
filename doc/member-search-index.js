@@ -1,1 +1,0 @@
-memberSearchIndex = [{"p":"edu.java.app","c":"MusicGroupList","l":"MusicGroupList()","u":"%3Cinit%3E()","k":"3"},{"p":"edu.java.app","c":"MusicGroupList","l":"show()"}];updateSearchResults();
