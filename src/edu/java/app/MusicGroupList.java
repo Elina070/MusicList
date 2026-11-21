@@ -5,11 +5,11 @@ import edu.java.app.exceptions.EmptyGroupNameException;
 import edu.java.app.exceptions.InvalidYearException;
 import edu.java.app.files.TextFileManager;
 import edu.java.app.files.XmlFileManager;
-import edu.java.app.ThreadedReportGenerator;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -181,36 +181,37 @@ public class MusicGroupList {
     }
 
     /**
-     * Выбирает файл для сохранения.
+     * Открывает системный диалог Windows для сохранения файла.
      */
     private File chooseSaveFile(String format) {
-        JFileChooser chooser = new JFileChooser();
 
         String extension = "." + format;
 
-        chooser.setDialogTitle("Сохранить файл");
-        chooser.setSelectedFile(
-                new File("music_groups" + extension)
+        FileDialog dialog = new FileDialog(
+                frame,
+                "Сохранить файл",
+                FileDialog.SAVE
         );
 
-        chooser.setFileFilter(
-                new javax.swing.filechooser.FileNameExtensionFilter(
-                        format.toUpperCase() + " files (*" + extension + ")",
-                        format
-                )
-        );
+        dialog.setFile("music_groups" + extension);
+        dialog.setVisible(true);
 
-        if (chooser.showSaveDialog(frame)
-                != JFileChooser.APPROVE_OPTION) {
+        String directory = dialog.getDirectory();
+        String fileName = dialog.getFile();
+
+        // Пользователь нажал Cancel.
+        if (directory == null || fileName == null) {
             return null;
         }
 
-        File file = chooser.getSelectedFile();
+        File file = new File(directory, fileName);
 
+        // Добавляем расширение, если пользователь его не указал.
         if (!file.getName().toLowerCase().endsWith(extension)) {
             file = new File(file.getAbsolutePath() + extension);
         }
 
+        // Проверяем существование файла.
         if (file.exists()) {
             int answer = JOptionPane.showConfirmDialog(
                     frame,
@@ -228,43 +229,54 @@ public class MusicGroupList {
     }
 
     /**
-     * Импортирует TXT или XML через один диалог выбора файла.
+     * Импортирует TXT или XML через системный проводник Windows.
      */
     private void importData() {
-        JFileChooser chooser = new JFileChooser();
 
-        chooser.setDialogTitle("Импорт данных");
-
-        chooser.setFileFilter(
-                new javax.swing.filechooser.FileNameExtensionFilter(
-                        "Поддерживаемые файлы (*.txt, *.xml)",
-                        "txt", "xml"
-                )
+        FileDialog dialog = new FileDialog(
+                frame,
+                "Импорт данных",
+                FileDialog.LOAD
         );
 
-        if (chooser.showOpenDialog(frame)
-                != JFileChooser.APPROVE_OPTION) {
+        dialog.setFilenameFilter((directory, name) -> {
+            String lowerName = name.toLowerCase();
+
+            return lowerName.endsWith(".txt")
+                    || lowerName.endsWith(".xml");
+        });
+
+        dialog.setVisible(true);
+
+        String directory = dialog.getDirectory();
+        String fileName = dialog.getFile();
+
+        // Пользователь нажал Cancel.
+        if (directory == null || fileName == null) {
             return;
         }
 
-        File file = chooser.getSelectedFile();
-        String fileName = file.getName().toLowerCase();
+        File file = new File(directory, fileName);
+        String lowerFileName = file.getName().toLowerCase();
 
-        if (fileName.endsWith(".txt")) {
+        if (lowerFileName.endsWith(".txt")) {
+
             if (TextFileManager.importData(frame, model, file)) {
                 currentFormat = "txt";
             }
 
-        } else if (fileName.endsWith(".xml")) {
+        } else if (lowerFileName.endsWith(".xml")) {
+
             if (XmlFileManager.importData(frame, model, file)) {
                 currentFormat = "xml";
             }
 
         } else {
+
             JOptionPane.showMessageDialog(
                     frame,
                     "Выбран неподдерживаемый формат файла!",
-                    "Ошибка импорта",
+                    "Ошибка",
                     JOptionPane.ERROR_MESSAGE
             );
         }
@@ -274,6 +286,7 @@ public class MusicGroupList {
      * Создаёт меню File.
      */
     private JMenuBar createMenuBar() {
+
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
@@ -285,39 +298,19 @@ public class MusicGroupList {
                         25
                 )
         );
+
         JMenuItem saveItem = new JMenuItem("Save");
         JMenuItem saveAsItem = new JMenuItem("Save As...");
         JMenuItem importItem = new JMenuItem("Import");
-        JMenuItem reportItem = new JMenuItem("Generate HTML report...");
 
         saveItem.addActionListener(e -> save());
         saveAsItem.addActionListener(e -> saveAs());
         importItem.addActionListener(e -> importData());
 
-        reportItem.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Выберите исходный XML-файл");
-
-            chooser.setFileFilter(
-                    new javax.swing.filechooser.FileNameExtensionFilter(
-                            "XML files (*.xml)", "xml"
-                    )
-            );
-
-            if (chooser.showOpenDialog(frame)
-                    == JFileChooser.APPROVE_OPTION) {
-                ThreadedReportGenerator.start(
-                        frame, model, chooser.getSelectedFile()
-                );
-            }
-        });
-
         fileMenu.add(saveItem);
         fileMenu.add(saveAsItem);
         fileMenu.addSeparator();
         fileMenu.add(importItem);
-        fileMenu.addSeparator();
-        fileMenu.add(reportItem);
 
         menuBar.add(fileMenu);
 
@@ -331,7 +324,11 @@ public class MusicGroupList {
 
         // ОБЩИЕ ШРИФТЫ ИНТЕРФЕЙСА
         java.awt.Font menuFont =
-                new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 18);
+                new java.awt.Font(
+                        "Segoe UI",
+                        java.awt.Font.PLAIN,
+                        18
+                );
 
         UIManager.put("Menu.font", menuFont);
         UIManager.put("MenuItem.font", menuFont);
@@ -550,6 +547,7 @@ public class MusicGroupList {
 
         // ПОИСК
         findButton.addActionListener(event -> {
+
             String query = JOptionPane.showInputDialog(
                     frame,
                     "Введите название группы:",
@@ -569,6 +567,7 @@ public class MusicGroupList {
                         .contains(query.trim().toLowerCase())) {
 
                     table.setRowSelectionInterval(i, i);
+
                     table.scrollRectToVisible(
                             table.getCellRect(i, 0, true)
                     );
@@ -587,6 +586,7 @@ public class MusicGroupList {
 
         // УДАЛЕНИЕ
         deleteButton.addActionListener(event -> {
+
             int row = table.getSelectedRow();
 
             if (row == -1) {
@@ -604,6 +604,7 @@ public class MusicGroupList {
 
         // ДОБАВЛЕНИЕ
         addButton.addActionListener(event -> {
+
             int newNumber = model.getRowCount() + 1;
 
             model.addRow(new Object[]{
